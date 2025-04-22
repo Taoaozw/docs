@@ -92,7 +92,7 @@
       },
       "Error": {
         "required": [
-          "error",
+          "code",
           "message"
         ],
         "type": "object",
