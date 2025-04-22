@@ -34,7 +34,7 @@
           }
         },
         "responses": {
-          "204": {
+          "200": {
             "description": "Order created successfully. No content returned.",
             "content": {}
           },
