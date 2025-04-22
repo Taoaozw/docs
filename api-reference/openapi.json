@@ -205,8 +205,8 @@
         "properties": {
           "orderNo": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "minLength": 6,
+            "maxLength": 50
           },
           "imageUrls": {
             "type": "array",
