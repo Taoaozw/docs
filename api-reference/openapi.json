@@ -10,7 +10,7 @@
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "http://api.poderp.com"
     }
   ],
   "security": [
@@ -19,105 +19,27 @@
     }
   ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
+    "/api/openapi/order": {
       "post": {
-        "description": "Creates a new plant in the store",
+        "description": "Creates a new order via OpenAPI",
         "requestBody": {
-          "description": "Plant to add to the store",
+          "description": "Order details",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/CreateOpenAPIOrderRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
           "204": {
-            "description": "Plant deleted",
+            "description": "Order created successfully. No content returned.",
             "content": {}
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Invalid input or unexpected error",
             "content": {
               "application/json": {
                 "schema": {
@@ -125,28 +47,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
           }
         }
       }
@@ -203,6 +103,143 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "CreateOpenAPIOrderItemProductRequest": {
+        "type": "object",
+        "required": [
+          "spu",
+          "size",
+          "color",
+          "quantity"
+        ],
+        "properties": {
+          "spu": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "size": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "color": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "quantity": {
+            "type": "integer"
+          }
+        }
+      },
+      "CreateOpenAPIOrderItemRecipientInfoRequest": {
+        "type": "object",
+        "required": [
+          "receiverName",
+          "country",
+          "state",
+          "city",
+          "postcode",
+          "address1",
+          "phone"
+        ],
+        "properties": {
+          "receiverName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "state": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "postcode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "address1": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "remark": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          }
+        }
+      },
+      "CreateOpenAPIOrderItemRequest": {
+        "type": "object",
+        "required": [
+          "orderNo",
+          "recipient",
+          "product"
+        ],
+        "properties": {
+          "orderNo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "imageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "url"
+            },
+            "default": []
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/CreateOpenAPIOrderItemRecipientInfoRequest"
+          },
+          "product": {
+            "$ref": "#/components/schemas/CreateOpenAPIOrderItemProductRequest"
+          }
+        }
+      },
+      "CreateOpenAPIOrderRequest": {
+        "type": "object",
+        "required": [
+          "uniqueRequestId",
+          "orderItems"
+        ],
+        "properties": {
+          "uniqueRequestId": {
+            "type": "string"
+          },
+          "orderItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOpenAPIOrderItemRequest"
+            }
           }
         }
       }
