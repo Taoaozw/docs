@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
+    "title": "Pod ERP OpenAPI",
+    "description": "Pod ERP Open API for order management",
     "license": {
       "name": "MIT"
     },
@@ -10,7 +10,7 @@
   },
   "servers": [
     {
-      "url": "http://api.poderp.com"
+      "url": "https://api.platform.poderp.com"
     }
   ],
   "security": [
@@ -21,7 +21,8 @@
   "paths": {
     "/api/openapi/order": {
       "post": {
-        "description": "Creates a new order via OpenAPI",
+        "summary": "Create Orders",
+        "description": "Creates a new order via OpenAPI. After successful creation, the system will automatically trigger supplier matching and downstream processing.",
         "requestBody": {
           "description": "Order details",
           "required": true,
@@ -50,46 +51,61 @@
           }
         }
       }
+    },
+    "/api/openapi/waybills": {
+      "get": {
+        "summary": "Query Waybills",
+        "description": "Query waybill tracking numbers and shipping label URLs by `uniqueRequestId` or `orderNo`. At least one parameter must be provided.",
+        "parameters": [
+          {
+            "name": "uniqueRequestId",
+            "in": "query",
+            "required": false,
+            "description": "The unique request ID used when creating the order. Returns all waybills for that batch.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderNo",
+            "in": "query",
+            "required": false,
+            "description": "The customer order number (the `orderNo` passed in each order item when creating the order). Returns waybills associated with that specific order.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of waybill information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueryWaybillResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither uniqueRequestId nor orderNo was provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
       "Error": {
         "required": [
           "code",
@@ -205,6 +221,7 @@
         "properties": {
           "orderNo": {
             "type": "string",
+            "description": "Customer order number, used later to query waybills",
             "minLength": 6,
             "maxLength": 50
           },
@@ -232,13 +249,42 @@
         ],
         "properties": {
           "uniqueRequestId": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique identifier for this order batch, used for deduplication and later querying waybills"
           },
           "orderItems": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateOpenAPIOrderItemRequest"
             }
+          }
+        }
+      },
+      "QueryWaybillResponse": {
+        "type": "object",
+        "properties": {
+          "customerOrderNo": {
+            "type": "string",
+            "description": "The customer order number"
+          },
+          "waybillNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Waybill tracking number"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last-mile delivery tracking number"
+          },
+          "labelUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Shipping label URL"
+          },
+          "status": {
+            "type": "string",
+            "description": "Waybill status (CREATED, PENDING, COMPLETED, FAILED, CANCELLED, INTERCEPTED)"
           }
         }
       }
