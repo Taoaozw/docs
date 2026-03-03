@@ -1,5 +1,5 @@
 ---
-title: 'Pod order openAPI'
+title: 'Pod Order OpenAPI'
 description: 'API endpoints for customers to import orders to our platform'
 ---
 
@@ -11,13 +11,32 @@ description: 'API endpoints for customers to import orders to our platform'
 
 This documentation provides API endpoints for importing orders to our platform. We use OpenAPI specifications to describe these interfaces, making it easy to integrate with your systems.
 
-<Card
-  title="Order Import API Endpoints"
-  icon="file-import"
-  href="https://gist.github.com/Taoaozw/6d03494933256c98f34b5de94f772caa"
->
-  View the OpenAPI specification file
-</Card>
+## Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+
+    rect rgb(240, 253, 244)
+    Note over Client,API: Step 1 — Discover Products
+    Client->>API: GET /api/openapi/products
+    API-->>Client: Product list with SKU codes
+    end
+
+    rect rgb(239, 246, 255)
+    Note over Client,API: Step 2 — Create Orders
+    Client->>API: POST /api/openapi/order
+    Note right of Client: Use skuCode from Step 1
+    API-->>Client: 200 OK
+    end
+
+    rect rgb(254, 249, 235)
+    Note over Client,API: Step 3 — Track Shipments
+    Client->>API: GET /api/openapi/waybills?orderNo=xxx
+    API-->>Client: Tracking numbers & label URLs
+    end
+```
 
 ## Authentication
 

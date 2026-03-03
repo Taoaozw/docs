@@ -3,4 +3,7 @@ title: 'Create Orders'
 openapi: 'POST /api/openapi/order'
 ---
 
-This is an open API endpoint that allows customers to import their orders into the system.
+Import orders into the system. You can specify products in two ways:
+
+- **By SKU code (recommended):** Pass the `sku` field with a code from [List Products](/api-reference/endpoint/list-products). The system resolves size, color, and SPU automatically.
+- **By SPU + size + color:** Pass `spu`, `size`, and `color` individually (legacy method, still supported).

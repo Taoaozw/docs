@@ -20,7 +20,14 @@
             ]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "Product Catalog",
+            "pages": [
+              "api-reference/endpoint/list-products",
+              "api-reference/endpoint/list-variants"
+            ]
+          },
+          {
+            "group": "Order Management",
             "pages": [
               "api-reference/endpoint/create",
               "api-reference/endpoint/query-waybills"

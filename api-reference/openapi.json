@@ -6,7 +6,7 @@
     "license": {
       "name": "MIT"
     },
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "servers": [
     {
@@ -19,10 +19,63 @@
     }
   ],
   "paths": {
+    "/api/openapi/products": {
+      "get": {
+        "summary": "List Products",
+        "description": "Returns all products (SPUs) available to the authenticated customer, including their variants (SKUs).",
+        "responses": {
+          "200": {
+            "description": "List of available products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi/products/{spuCode}/variants": {
+      "get": {
+        "summary": "List Variants",
+        "description": "Returns all variants (SKUs) for a specific product. Use the `skuCode` from the response when creating orders.",
+        "parameters": [
+          {
+            "name": "spuCode",
+            "in": "path",
+            "required": true,
+            "description": "The product SPU code",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of variants for the product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VariantResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/openapi/order": {
       "post": {
         "summary": "Create Orders",
-        "description": "Creates a new order via OpenAPI. After successful creation, the system will automatically trigger supplier matching and downstream processing.",
+        "description": "Creates a new order. You can specify products by `sku` code (recommended) or by `spu` + `size` + `color`.",
         "requestBody": {
           "description": "Order details",
           "required": true,
@@ -107,60 +160,116 @@
   "components": {
     "schemas": {
       "Error": {
-        "required": [
-          "code",
-          "message"
-        ],
+        "required": ["code", "message"],
         "type": "object",
         "properties": {
-          "code": {
-            "type": "string"
+          "code": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      },
+      "ProductResponse": {
+        "type": "object",
+        "properties": {
+          "spuCode": {
+            "type": "string",
+            "description": "Product code"
           },
-          "message": {
-            "type": "string"
+          "title": {
+            "type": "string",
+            "description": "Product title"
+          },
+          "name": {
+            "type": "string",
+            "description": "English name"
+          },
+          "cnName": {
+            "type": "string",
+            "description": "Chinese name"
+          },
+          "category": {
+            "type": "string",
+            "description": "Product category"
+          },
+          "productImage": {
+            "type": "string",
+            "description": "Product image URL"
+          },
+          "sizes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Available sizes"
+          },
+          "colors": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Available colors"
+          },
+          "variants": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/VariantResponse" },
+            "description": "All SKU variants of this product"
+          }
+        }
+      },
+      "VariantResponse": {
+        "type": "object",
+        "properties": {
+          "skuCode": {
+            "type": "string",
+            "description": "SKU code — use this value in the `sku` field when creating orders"
+          },
+          "size": {
+            "type": "string",
+            "description": "Variant size"
+          },
+          "color": {
+            "type": "string",
+            "description": "Variant color"
+          },
+          "weight": {
+            "type": "number",
+            "description": "Weight in kg"
           }
         }
       },
       "CreateOpenAPIOrderItemProductRequest": {
         "type": "object",
-        "required": [
-          "spu",
-          "size",
-          "color",
-          "quantity"
-        ],
+        "required": ["quantity"],
         "properties": {
+          "sku": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "SKU code from the product catalog. When provided, `spu`, `size`, and `color` are not needed."
+          },
           "spu": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "description": "Product (SPU) code. Required if `sku` is not provided."
           },
           "size": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "description": "Size. Optional when `sku` is provided."
           },
           "color": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "description": "Color. Optional when `sku` is provided."
           },
           "quantity": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Order quantity"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Additional product attributes (e.g. `material`, `packaging`)"
           }
         }
       },
       "CreateOpenAPIOrderItemRecipientInfoRequest": {
         "type": "object",
-        "required": [
-          "receiverName",
-          "country",
-          "state",
-          "city",
-          "postcode",
-          "address1",
-          "phone"
-        ],
+        "required": ["receiverName", "country", "state", "city", "postcode", "address1", "phone"],
         "properties": {
           "receiverName": {
             "type": "string",
@@ -200,7 +309,6 @@
           },
           "remark": {
             "type": "string",
-            "minLength": 1,
             "maxLength": 300,
             "nullable": true
           },
@@ -213,11 +321,7 @@
       },
       "CreateOpenAPIOrderItemRequest": {
         "type": "object",
-        "required": [
-          "orderNo",
-          "recipient",
-          "product"
-        ],
+        "required": ["orderNo", "recipient", "product"],
         "properties": {
           "orderNo": {
             "type": "string",
@@ -243,10 +347,7 @@
       },
       "CreateOpenAPIOrderRequest": {
         "type": "object",
-        "required": [
-          "uniqueRequestId",
-          "orderItems"
-        ],
+        "required": ["uniqueRequestId", "orderItems"],
         "properties": {
           "uniqueRequestId": {
             "type": "string",
