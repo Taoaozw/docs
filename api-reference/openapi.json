@@ -103,6 +103,298 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "query-order",
+        "summary": "Query Order",
+        "description": "Query order information",
+        "parameters": [
+          {
+            "name": "uniqueRequestId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique request ID of the order to query"
+          },
+          {
+            "name": "orderNos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "List only of order numbers to query(comma-separated)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "orderNo",
+                      "recipient",
+                      "product",
+                      "shipping",
+                      "status",
+                      "source",
+                      "remark",
+                      "customerOrderNo",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "ID of the order in the Pod ERP system"
+                      },
+                      "orderNo": {
+                        "type": "string",
+                        "description": "Order number, note that this is different from the `customerOrderNo` provided by the customer, and is used for internal tracking within the Pod ERP system"
+                      },
+                      "trackingNo": {
+                        "type": "string",
+                        "description": "Tracking number"
+                      },
+                      "recipient": {
+                        "type": "object",
+                        "required": [
+                          "receiverName",
+                          "country",
+                          "state",
+                          "city",
+                          "address1",
+                          "postcode",
+                          "phone"
+                        ],
+                        "properties": {
+                          "receiverName": {
+                            "type": "string",
+                            "description": "Recipient name"
+                          },
+                          "country": {
+                            "type": "string",
+                            "description": "Recipient country"
+                          },
+                          "state": {
+                            "type": "string",
+                            "description": "Recipient state"
+                          },
+                          "city": {
+                            "type": "string",
+                            "description": "Recipient city"
+                          },
+                          "address1": {
+                            "type": "string",
+                            "description": "Recipient address line 1"
+                          },
+                          "address2": {
+                            "type": "string",
+                            "description": "Recipient address line 2"
+                          },
+                          "postcode": {
+                            "type": "string",
+                            "description": "Recipient postal code"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "description": "Recipient phone number"
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Recipient email address"
+                          }
+                        }
+                      },
+                      "product": {
+                        "type": "object",
+                        "required": [
+                          "spu",
+                          "size",
+                          "color",
+                          "qty",
+                          "weight",
+                          "name",
+                          "cnName",
+                          "title"
+                        ],
+                        "properties": {
+                          "spu": {
+                            "type": "string",
+                            "description": "Product SPU"
+                          },
+                          "size": {
+                            "type": "string",
+                            "description": "Product size"
+                          },
+                          "color": {
+                            "type": "string",
+                            "description": "Product color"
+                          },
+                          "qty": {
+                            "type": "integer",
+                            "description": "Product quantity"
+                          },
+                          "weight": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Product weight(kg)"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Product name"
+                          },
+                          "cnName": {
+                            "type": "string",
+                            "description": "Product Chinese name"
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "Product title"
+                          },
+                          "material": {
+                            "type": "string",
+                            "description": "Product material"
+                          }
+                        }
+                      },
+                      "shipping": {
+                        "type": "object",
+                        "required": [
+                          "channel",
+                          "wayBillRelation",
+                          "customerProvidedTrackingNo"
+                        ],
+                        "properties": {
+                          "channel": {
+                            "type": "string",
+                            "description": "Shipping channel code"
+                          },
+                          "shipMethod": {
+                            "type": "string",
+                            "description": "Shipping method code"
+                          },
+                          "wayBillRelation": {
+                            "type": "string",
+                            "description": "Waybill relation"
+                          },
+                          "waybillLabelUrl": {
+                            "type": "string",
+                            "description": "Waybill label URL(if applicable)"
+                          },
+                          "deliveryLabelLink": {
+                            "type": "string",
+                            "description": "Delivery label link(if applicable)"
+                          },
+                          "customerProvidedTrackingNo": {
+                            "type": "boolean",
+                            "description": "Indicates whether the customer provided a tracking number"
+                          }
+                        }
+                      },
+                      "waybillStatus": {
+                        "type": "string",
+                        "enum": [
+                          "CREATED",
+                          "PENDING",
+                          "COMPLETED",
+                          "FAILED",
+                          "CANCELLED",
+                          "INTERCEPTED"
+                        ],
+                        "description": "Waybill status, if the order has a waybill"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "CREATED",
+                          "CANCELLED",
+                          "COMPLETED",
+                          "SPLIT",
+                          "PROCESSING",
+                          "FAILED",
+                          "TRACKING_NOT_FOUND",
+                          "TRACKING_PRE_ADVICE_RECEIVED",
+                          "TRACKING_PICKED_UP",
+                          "TRACKING_IN_TRANSIT",
+                          "TRACKING_ARRIVED_DESTINATION_COUNTRY",
+                          "TRACKING_IN_CUSTOMS",
+                          "TRACKING_CUSTOMS_CLEARED",
+                          "TRACKING_ARRIVED_FOR_PICKUP",
+                          "TRACKING_OUT_FOR_DELIVERY",
+                          "TRACKING_DELIVERY_FAILED",
+                          "TRACKING_DELIVERED",
+                          "TRACKING_EXCEPTION",
+                          "TRACKING_RETURNED",
+                          "TRACKING_CANCELLED",
+                          "TRACKING_UNKNOWN"
+                        ],
+                        "description": "Order status"
+                      },
+                      "failedReason": {
+                        "type": "string",
+                        "description": "Reason for order failure(if applicable)"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "OPENAPI"
+                        ],
+                        "description": "Order source"
+                      },
+                      "remark": {
+                        "type": "string",
+                        "description": "Order remark"
+                      },
+                      "customerOrderNo": {
+                        "type": "string",
+                        "description": "Customer order number"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "Order creation time(milliseconds since epoch)"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "Order last update time(milliseconds since epoch)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Response code(e.g., 400, 100017)"
+                    },
+                    "msg": {
+                      "type": "string",
+                      "description": "Response message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/openapi/waybills": {
