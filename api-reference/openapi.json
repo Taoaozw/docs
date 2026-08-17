@@ -447,16 +447,238 @@
           }
         }
       }
+    },
+    "/api/openapi/trackings": {
+      "get": {
+        "summary": "Query Trackings",
+        "description": "Query tracking information by `uniqueRequestId` or `orderNos`. At least one parameter must be provided.",
+        "parameters": [
+          {
+            "name": "uniqueRequestId",
+            "in": "query",
+            "required": false,
+            "description": "The unique request ID used when creating the order. Returns all waybills for that batch.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderNos",
+            "in": "query",
+            "required": false,
+            "description": "The customer order numbers (the `orderNo` passed in each order item when creating the order). comma-separated list of order numbers. Returns trackings associated with those specific orders.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tracking information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueryTrackingResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither uniqueRequestId nor orderNos was provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "QueryTrackingResponse": {
+        "type": "object",
+        "required": [
+          "waybillNo",
+          "currentStatus",
+          "lastUpdatedAt"
+        ],
+        "properties": {
+          "waybillNo": {
+            "type": "string",
+            "description": "The waybill number"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Last-mile delivery tracking number"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Shipping channel code"
+          },
+          "currentStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_FOUND",
+              "PRE_ADVICE_RECEIVED",
+              "PICKED_UP",
+              "IN_TRANSIT",
+              "ARRIVED_DESTINATION_COUNTRY",
+              "IN_CUSTOMS",
+              "CUSTOMS_CLEARED",
+              "ARRIVED_FOR_PICKUP",
+              "OUT_FOR_DELIVERY",
+              "DELIVERY_FAILED",
+              "DELIVERED",
+              "EXCEPTION",
+              "RETURNED",
+              "CANCELLED",
+              "UNKNOWN"
+            ],
+            "description": "Current tracking status"
+          },
+          "destinationCountry": {
+            "type": "string",
+            "description": "Destination country of the shipment"
+          },
+          "lastMileProvider": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the last-mile delivery provider"
+              },
+              "telephone": {
+                "type": "string",
+                "description": "Telephone number of the last-mile delivery provider"
+              },
+              "website": {
+                "type": "string",
+                "description": "Website of the last-mile delivery provider"
+              }
+            }
+          },
+          "trackingEvents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "eventTime",
+                "status",
+                "description"
+              ],
+              "properties": {
+                "eventTime": {
+                  "type": "string",
+                  "format": "datetime",
+                  "description": "The time of the tracking event"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_FOUND",
+                    "PRE_ADVICE_RECEIVED",
+                    "PICKED_UP",
+                    "IN_TRANSIT",
+                    "ARRIVED_DESTINATION_COUNTRY",
+                    "IN_CUSTOMS",
+                    "CUSTOMS_CLEARED",
+                    "ARRIVED_FOR_PICKUP",
+                    "OUT_FOR_DELIVERY",
+                    "DELIVERY_FAILED",
+                    "DELIVERED",
+                    "EXCEPTION",
+                    "RETURNED",
+                    "CANCELLED",
+                    "UNKNOWN"
+                  ],
+                  "description": "The status of the tracking event"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the tracking event"
+                },
+                "location": {
+                  "type": "string",
+                  "description": "Location of the tracking event"
+                },
+                "locationDetail": {
+                  "type": "object",
+                  "properties": {
+                    "city": {
+                      "type": "string",
+                      "description": "City of the tracking event"
+                    },
+                    "province": {
+                      "type": "string",
+                      "description": "Province(or State) of the tracking event"
+                    },
+                    "country": {
+                      "type": "string",
+                      "description": "Country of the tracking event"
+                    },
+                    "postCode": {
+                      "type": "string",
+                      "description": "Postal code of the tracking event"
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Address of the tracking event"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "deliveryDays": {
+            "type": "integer",
+            "description": "Estimated delivery days"
+          },
+          "podLinks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "url"
+            },
+            "description": "Links to proof of delivery documents"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "The last time the tracking information was updated(even if there are no new tracking events)"
+          },
+          "lastEventTime": {
+            "type": "string",
+            "format": "datetime",
+            "description": "The last time the tracking event was updated"
+          }
+        }
+      },
       "Error": {
-        "required": ["code", "message"],
+        "required": [
+          "code",
+          "message"
+        ],
         "type": "object",
         "properties": {
-          "code": { "type": "string" },
-          "message": { "type": "string" }
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         }
       },
       "ProductResponse": {
@@ -488,17 +710,23 @@
           },
           "sizes": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Available sizes"
           },
           "colors": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Available colors"
           },
           "variants": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/VariantResponse" },
+            "items": {
+              "$ref": "#/components/schemas/VariantResponse"
+            },
             "description": "All SKU variants of this product"
           }
         }
@@ -526,7 +754,9 @@
       },
       "CreateOpenAPIOrderItemProductRequest": {
         "type": "object",
-        "required": ["quantity"],
+        "required": [
+          "quantity"
+        ],
         "properties": {
           "sku": {
             "type": "string",
@@ -554,14 +784,24 @@
           },
           "attributes": {
             "type": "object",
-            "additionalProperties": { "type": "string" },
+            "additionalProperties": {
+              "type": "string"
+            },
             "description": "Additional product attributes (e.g. `material`, `packaging`)"
           }
         }
       },
       "CreateOpenAPIOrderItemRecipientInfoRequest": {
         "type": "object",
-        "required": ["receiverName", "country", "state", "city", "postcode", "address1", "phone"],
+        "required": [
+          "receiverName",
+          "country",
+          "state",
+          "city",
+          "postcode",
+          "address1",
+          "phone"
+        ],
         "properties": {
           "receiverName": {
             "type": "string",
@@ -613,7 +853,11 @@
       },
       "CreateOpenAPIOrderItemRequest": {
         "type": "object",
-        "required": ["orderNo", "recipient", "product"],
+        "required": [
+          "orderNo",
+          "recipient",
+          "product"
+        ],
         "properties": {
           "orderNo": {
             "type": "string",
@@ -639,7 +883,10 @@
       },
       "CreateOpenAPIOrderRequest": {
         "type": "object",
-        "required": ["uniqueRequestId", "orderItems"],
+        "required": [
+          "uniqueRequestId",
+          "orderItems"
+        ],
         "properties": {
           "uniqueRequestId": {
             "type": "string",
