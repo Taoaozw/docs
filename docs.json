@@ -31,7 +31,8 @@
             "pages": [
               "api-reference/endpoint/create",
               "api-reference/endpoint/query-waybills",
-              "api-reference/endpoint/query-order"
+              "api-reference/endpoint/query-order",
+              "api-reference/endpoint/query-trackings"
             ]
           }
         ]

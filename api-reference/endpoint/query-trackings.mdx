@@ -1,0 +1,12 @@
+---
+title: 'Query Trackings'
+openapi: 'GET /api/openapi/trackings'
+---
+
+Query waybill tracking numbers and shipping label URLs for your orders.
+
+You can query by either:
+- **`uniqueRequestId`** — the batch identifier used when creating orders, returns all trackings for that batch
+- **`orderNos`** — the customer order number from individual order items, returns trackings for that specific order
+
+At least one parameter must be provided.
