@@ -38,6 +38,10 @@ sequenceDiagram
     end
 ```
 
+## Excel Order Files
+
+To use the operator file workflow, call [List Order Templates](/api-reference/endpoint/list-order-templates), then [Upload Order File](/api-reference/endpoint/upload-order-file) with an Excel list and optional attachments. Save the returned `uniqueRequestId` for order and shipment queries.
+
 ## Authentication
 
 All API endpoints require authentication using Bearer tokens provided in the Authorization header.

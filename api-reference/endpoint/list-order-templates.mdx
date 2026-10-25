@@ -1,0 +1,23 @@
+---
+title: 'List Order Templates'
+openapi: 'GET /api/openapi/order/templates'
+---
+
+Returns enabled order parsing templates for the business associated with your customer API key. Templates from other businesses, disabled templates and image-only templates are excluded.
+
+Use a returned `id` as `templateId` when calling [Upload Order File](/api-reference/endpoint/upload-order-file). Excel header names must match the returned `columns` exactly. Ask your account manager for a matching order template if the list is empty.
+
+```bash
+curl 'https://api.platform.poderp.com/api/openapi/order/templates' \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```json
+[
+  {
+    "id": "1234567890123456789",
+    "name": "Order template",
+    "columns": ["Order number", "Product", "Recipient"]
+  }
+]
+```

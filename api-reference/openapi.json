@@ -501,6 +501,144 @@
           }
         }
       }
+    },
+    "/api/openapi/order/templates": {
+      "get": {
+        "summary": "List Order Templates",
+        "operationId": "listOrderFileTemplates",
+        "description": "Returns enabled order templates for the authenticated customer business. No operator login is required.",
+        "responses": {
+          "200": {
+            "description": "Available order templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderFileTemplate"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Customer is missing or disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderFileErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key"
+          }
+        }
+      }
+    },
+    "/api/openapi/order/upload": {
+      "post": {
+        "summary": "Upload Order File",
+        "operationId": "uploadOrderFile",
+        "description": "Import an Excel order list using the same template parser and factory validation as the operator upload screen. Customer ownership comes from the API key. The operation always creates orders; no selectedUser, customerId or action is needed. Database changes are rolled back if any row fails. Image downloads and downstream order processing are asynchronous. This endpoint becomes available after the backend release containing it is deployed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "templateId",
+                  "file"
+                ],
+                "properties": {
+                  "templateId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Enabled order template ID from List Order Templates."
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "One non-empty .xlsx or .xls order file. Filename must contain the authenticated customer name; headers must match the selected template."
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Optional attachments. Repeat the attachments multipart field for multiple files."
+                  },
+                  "namingType": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "simple",
+                      "random",
+                      "sku"
+                    ],
+                    "default": "default"
+                  },
+                  "urlSplitToken": {
+                    "type": "string",
+                    "enum": [
+                      "0",
+                      "1",
+                      "2"
+                    ],
+                    "default": "0",
+                    "description": "Image URL separator: 0 = pipe, 1 = semicolon, 2 = newline."
+                  },
+                  "needDownloadImage": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Create asynchronous image download tasks. Set false to import orders only."
+                  },
+                  "newImageDownload": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use the new image downloader. Ignored when needDownloadImage is false."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order batch imported; downstream processing may still be pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderFileUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Row validation failure, or request/file/template error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OrderFileUploadResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OrderFileErrorResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -736,7 +874,7 @@
         "properties": {
           "skuCode": {
             "type": "string",
-            "description": "SKU code — use this value in the `sku` field when creating orders"
+            "description": "SKU code \u2014 use this value in the `sku` field when creating orders"
           },
           "size": {
             "type": "string",
@@ -926,6 +1064,100 @@
             "type": "string",
             "description": "Waybill status (CREATED, PENDING, COMPLETED, FAILED, CANCELLED, INTERCEPTED)"
           }
+        }
+      },
+      "OrderFileRowError": {
+        "type": "object",
+        "required": [
+          "rowIndex",
+          "errors"
+        ],
+        "properties": {
+          "rowIndex": {
+            "type": "integer",
+            "description": "Excel row number, starting at 2 for the first data row."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OrderFileUploadResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "totalRows",
+          "errors"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "totalRows": {
+            "type": "integer"
+          },
+          "mainOrderId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Created batch ID, encoded as a string to preserve precision."
+          },
+          "uniqueRequestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Server-generated batch key for Query Orders, Query Waybills and Query Trackings. Only returned on success."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderFileRowError"
+            }
+          }
+        }
+      },
+      "OrderFileTemplate": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "columns"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Required Excel header names for this template."
+          }
+        }
+      },
+      "OrderFileErrorResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "msg"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "data": {}
         }
       }
     },

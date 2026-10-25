@@ -1,0 +1,89 @@
+---
+title: 'Upload Order File'
+openapi: 'POST /api/openapi/order/upload'
+---
+
+Upload an Excel order list with the same parsing template used by operators in the order import screen. This endpoint uses your existing customer API key.
+
+<Note>
+  Availability requires the backend release containing this endpoint to be deployed.
+</Note>
+
+## Prepare the order file
+
+1. Call [List Order Templates](/api-reference/endpoint/list-order-templates) and choose an enabled order template.
+2. Prepare one `.xlsx` or `.xls` file whose headers match the template's `columns`. The file must contain at least one data row.
+3. Include your customer name in the filename, as in the operator workflow. For customer `ZTQ`, `26ZTQ018.xlsx` is valid.
+4. Send a `multipart/form-data` request. Let your HTTP client generate the multipart boundary.
+
+The API key determines the order customer. Do not send `selectedUser`, `customerId`, `action` or an operator login token. This endpoint always imports orders and preserves the existing Excel order and factory validation rules.
+
+## Example
+
+```bash
+curl --request POST 'https://api.platform.poderp.com/api/openapi/order/upload' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --form 'templateId=YOUR_TEMPLATE_ID' \
+  --form 'file=@26ZTQ018.xlsx' \
+  --form 'urlSplitToken=0' \
+  --form 'namingType=default' \
+  --form 'newImageDownload=true' \
+  --form 'needDownloadImage=false'
+```
+
+This example matches the screenshot workflow: import orders, use pipe-separated image URLs, select the new downloader, and disable image downloads. Set `needDownloadImage=true` to create image download tasks.
+
+To include attachments, repeat the field:
+
+```bash
+--form 'attachments=@notes.pdf' \
+--form 'attachments=@artwork.zip'
+```
+
+Supported attachment formats include archives (`zip`, `rar`, `7z`, `tar`, `gz`), spreadsheets (`xlsx`, `xls`, `csv`), documents (`pdf`, `doc`, `docx`), images (`jpg`, `jpeg`, `png`, `gif`, `bmp`, `webp`) and text (`txt`, `json`, `xml`). Attachments are stored with the order batch; they do not replace image URLs in the spreadsheet.
+
+## Options
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `templateId` | Required | Template ID from List Order Templates |
+| `file` | Required | One Excel order list |
+| `attachments` | None | Optional attachment files |
+| `urlSplitToken` | `0` | `0`: pipe, `1`: semicolon, `2`: newline |
+| `namingType` | `default` | `default`, `simple`, `random`, or `sku` |
+| `needDownloadImage` | `true` | Enable asynchronous image downloads |
+| `newImageDownload` | `false` | Use the new downloader when image downloads are enabled |
+
+## Success and follow-up queries
+
+```json
+{
+  "success": true,
+  "totalRows": 12,
+  "mainOrderId": "1234567890123456789",
+  "uniqueRequestId": "server-generated-batch-key",
+  "errors": []
+}
+```
+
+Save `uniqueRequestId`. Use it with [Query Orders](/api-reference/endpoint/query-order), [Query Waybills](/api-reference/endpoint/query-waybills) and [Query Trackings](/api-reference/endpoint/query-trackings). A successful upload means the order batch was imported; factory matching, shipment creation and image downloads can still be pending.
+
+## Validation failures
+
+If a row fails validation, HTTP 400 includes Excel row numbers. No orders from that file are committed:
+
+```json
+{
+  "success": false,
+  "totalRows": 12,
+  "mainOrderId": null,
+  "uniqueRequestId": null,
+  "errors": [
+    { "rowIndex": 2, "errors": ["SKU validation failed"] }
+  ]
+}
+```
+
+Other request errors (such as an empty file, unsupported format, unavailable template or malformed workbook) return HTTP 400 with `code`, `msg` and optional `data`. Missing or invalid API keys return HTTP 401.
+
+Existing order numbers are rejected by the Excel import duplicate checks. The endpoint does not accept a client-generated idempotency key. If a request times out, check the order batch in the operator dashboard before uploading the same file again.
